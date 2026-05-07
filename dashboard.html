@@ -186,9 +186,35 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f0eeeb;font-family:
   padding:3px 7px;border-radius:2px;
 }
 
-/* Scrollbar */
-.detail-section::-webkit-scrollbar,.acc-body::-webkit-scrollbar{width:3px}
-.detail-section::-webkit-scrollbar-thumb,.acc-body::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px}
+/* Scrollbar */`r`n.detail-section::-webkit-scrollbar,.acc-body::-webkit-scrollbar{width:3px}`r`n.detail-section::-webkit-scrollbar-thumb,.acc-body::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px}
+#mobile-panel-toggle{
+  display:none;
+  border:1px solid #444;
+  background:#111;
+  color:#fff;
+  border-radius:4px;
+  padding:6px 10px;
+  font-size:11px;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+#mobile-panel-toggle:hover{background:#1b1b1b}
+
+@media (max-width: 900px){
+  #deck-container{left:0}
+  #sidebar{
+    width:min(92vw,380px);
+    transform:translateX(calc(-100% + 52px));
+    transition:transform .25s ease;
+    box-shadow:0 8px 30px rgba(0,0,0,.28);
+  }
+  #sidebar.expanded{transform:translateX(0)}
+  #mobile-panel-toggle{display:inline-flex;align-items:center;justify-content:center}
+  #header{padding:12px 12px;gap:10px}
+  #header .title{font-size:16px;line-height:1.25}
+  #zoom-ctrl{right:10px;bottom:14px}
+}
 </style>
 </head>
 <body>
@@ -200,8 +226,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f0eeeb;font-family:
 
   <!-- Header -->
   <div id="header">
-    <div class="title" id="header-title">Rising Phoenix Retrofit Initiatives</div>
-  </div>
+  <button id="mobile-panel-toggle" type="button" aria-controls="sidebar" aria-expanded="false" onclick="toggleSidebar()">Open</button>
+  <div class="title" id="header-title">Rising Phoenix Retrofit Initiatives</div>
+</div>
 
   <!-- Scenario tabs -->
   <div id="scenario-strip">
@@ -286,5 +313,40 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f0eeeb;font-family:
 </div>
 <!-- <div id="attr">Building Energy Data · 9,391 units</div> -->
 
+<script>
+(function(){
+  const sidebar = document.getElementById('sidebar');
+  const btn = document.getElementById('mobile-panel-toggle');
+  const mq = window.matchMedia('(max-width: 900px)');
+
+  function setExpanded(expanded){
+    sidebar.classList.toggle('expanded', expanded);
+    btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    btn.textContent = expanded ? 'Close' : 'Open';
+  }
+
+  window.toggleSidebar = function(forceState){
+    const next = typeof forceState === 'boolean' ? forceState : !sidebar.classList.contains('expanded');
+    setExpanded(next);
+  };
+
+  function onViewportChange(){
+    if(mq.matches){
+      setExpanded(false);
+    }else{
+      setExpanded(true);
+    }
+  }
+
+  if(mq.addEventListener){
+    mq.addEventListener('change', onViewportChange);
+  }else{
+    mq.addListener(onViewportChange);
+  }
+
+  onViewportChange();
+})();
+</script>
 </body>
 </html>
+
