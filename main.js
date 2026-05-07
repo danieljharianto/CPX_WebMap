@@ -4,7 +4,10 @@ import { MVTLayer } from 'deck.gl';
 import Chart from 'chart.js/auto';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-const MAPBOX_TOKEN=import.meta.env.VITE_MAPBOX_TOKEN;
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+if (!MAPBOX_TOKEN) {
+  console.error('Missing VITE_MAPBOX_TOKEN. Set it in .env (local) and Vercel Environment Variables.');
+}
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
 let mapInst=null;
@@ -257,3 +260,4 @@ window.zoomMap=zoomMap;
 window.toggleAcc=toggleAcc;
 
 initMap();
+
