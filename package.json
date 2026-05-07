@@ -1,0 +1,35 @@
+{
+  "name": "gui",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "predeploy": "npm run build && node scripts/prepare-dist.js",
+    "deploy": "gh-pages -d dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danieljharianto/GUI.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/danieljharianto/GUI/issues"
+  },
+  "homepage": "https://github.com/danieljharianto/GUI#readme",
+  "devDependencies": {
+    "gh-pages": "^6.3.0",
+    "vite": "^8.0.3"
+  },
+  "dependencies": {
+    "@deck.gl/mapbox": "^9.2.11",
+    "chart.js": "^4.5.1",
+    "deck.gl": "^9.2.11",
+    "mapbox-gl": "^3.20.0"
+  }
+}

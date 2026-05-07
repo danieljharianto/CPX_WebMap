@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phoenix Mobile Housing Story</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --sand:       #f0eeeb;
+  --clay:       #e8341a;
+  --terracotta: #cc2200;
+  --dusk: linear-gradient(to bottom, #919191, #962828);
+  --sky:        #811f1f;
+  --ash:        #888888;
+  --accent:     #e8341a;
+  --cool:       #290404;
+  --panel-bg:   rgb(0, 0, 0);
+  --border:     rgba(0, 0, 0, 0.22);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--dusk);
+  color: var(--sand);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ── FIXED 3D CANVAS ── */
+#canvas-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+canvas { display: block; width: 100% !important; height: 100% !important; }
+
+/* ── GRADIENT OVERLAYS ── */
+#vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 50%, transparent 80%, rgba(0, 0, 0, 0.55) 100%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.35) 0%, transparent 20%, transparent 65%, rgba(128, 56, 50, 0.331) 100%);
+  pointer-events: none;
+}
+
+/* ── PROGRESS BAR ── */
+#bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  width: 0%;
+  background: linear-gradient(90deg, var(--terracotta), var(--accent), var(--cool));
+  z-index: 100;
+  transition: width 0.08s linear;
+}
+
+/* ── ISSUE COUNTER (top-right) ── */
+#counter {
+  position: fixed;
+  top: 1.4rem;
+  right: 1.8rem;
+  z-index: 50;
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  color: var(--ash);
+  text-transform: uppercase;
+  text-align: right;
+  line-height: 1.7;
+  pointer-events: none;
+}
+#counter strong {
+  display: block;
+  font-size: 0.62rem;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+}
+
+/* ── FLOATING DATA BADGES ── */
+.badge {
+  position: fixed;
+  z-index: 20;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  padding: 0.55rem 0.8rem;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  backdrop-filter: blur(10px);
+}
+.badge.on { opacity: 1; transform: translateY(0); }
+.badge-val {
+  font-size: 1.5rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1;
+}
+.badge-label {
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ash);
+  margin-top: 0.2rem;
+}
+
+#badge-temp  { top: 14%; left: 5%; }
+#badge-units { top: 14%; right: 5%; }
+#badge-cost  { bottom: 22%; left: 5%; }
+#badge-eff   { bottom: 22%; right: 5%; }
+
+/* ── SCROLLY WRAPPER ── */
+#scrolly { position: relative; z-index: 10; pointer-events: none; }
+
+/* ── INTRO ── */
+#intro {
+  height: 65vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 8vw 30vh;
+  pointer-events: none;
+}
+
+.tag {
+  font-size: 0.55rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.2rem;
+}
+
+h1 {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(2.4rem, 7vw, 5.5rem);
+  font-weight: 700;
+  line-height: 1.0;
+  max-width: 640px;
+  margin-bottom: 1rem;
+}
+h1 em { font-style: italic; color: var(--clay); }
+
+.deck {
+  font-size: 0.65rem;
+  line-height: 2;
+  color: rgba(240,238,235,0.55);
+  max-width: 380px;
+  letter-spacing: 0.03em;
+}
+
+.scroll-cue {
+  margin-top: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 0.52rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+.scroll-cue::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--accent);
+  animation: grow 2.2s ease-in-out infinite;
+}
+@keyframes grow {
+  0%,100%{ width:12px; opacity:.3; }
+  50%    { width:28px; opacity:1;  }
+}
+
+/* ── STEPS ── */
+.steps { padding-bottom: 30vh; }
+
+.step {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  padding: 6vh 6vw;
+}
+.step:nth-child(odd)  { justify-content: flex-start; }
+.step:nth-child(even) { justify-content: flex-end;   }
+
+.panel {
+  pointer-events: auto;
+  width: min(340px, 88vw);
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--accent);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding: 1.6rem;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.panel.on { opacity: 1; transform: translateY(0); }
+
+.step-num {
+  font-size: 0.52rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.7rem;
+}
+
+.step h2 {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.55rem;
+  font-weight: 600;
+  line-height: 1.15;
+  margin-bottom: 0.7rem;
+  color: var(--sand);
+}
+.step h2 em { font-style: italic; color: var(--clay); }
+
+.step p {
+  font-size: 13px;
+  line-height: 2.0;
+  color: rgba(240,238,235,0.62);
+  letter-spacing: 0.02em;
+}
+
+.divider {
+  margin: 1rem 0;
+  border: none;
+  border-top: 1px solid rgba(232,150,58,0.12);
+}
+
+.data-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+  margin-top: 0.8rem;
+}
+.data-item { display: flex; flex-direction: column; gap: 0.18rem; }
+.data-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1;
+}
+.data-label {
+  font-size: 0.48rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
+/* heat bar */
+.heat-bar-wrap { margin-top: 0.9rem; }
+.heat-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.48rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ash);
+  margin-bottom: 0.35rem;
+}
+.heat-bar-track {
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  position: relative;
+  overflow: visible;
+}
+.heat-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cool), var(--accent), var(--terracotta));
+  transition: width 1s ease;
+}
+
+/* tag pill */
+.pill {
+  display: inline-block;
+  border: 1px solid rgba(232,150,58,0.3);
+  padding: 0.2rem 0.5rem;
+  font-size: 0.48rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-top: 0.75rem;
+}
+
+/* ── CHAPTER MARKER (top-left) ── */
+#chapter {
+  position: fixed;
+  top: 1.4rem;
+  left: 1.8rem;
+  font-size: 0.52rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ash);
+  z-index: 50;
+  transition: color 0.4s;
+  pointer-events: none;
+}
+
+/* ── OUTRO ── */
+#outro {
+  min-height: 150vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 4rem 2rem;
+  pointer-events: none;
+}
+#outro h2 {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--sand);
+  margin-bottom: 1rem;
+}
+#outro p {
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ash);
+  margin-bottom: 2.5rem;
+}
+.rule { width: 50px; height: 1px; background: var(--accent); opacity: 0.4; margin: 0 auto; }
+
+.btn-dashboard {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 2.5rem;
+  padding: 0.75rem 1.6rem;
+  background: var(--accent);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  pointer-events: auto;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.btn-dashboard:hover {
+  background: var(--terracotta);
+  transform: translateY(-2px);
+}
+.btn-dashboard::after {
+  content: '→';
+  font-size: 0.8rem;
+}
+
+/* ── ANNOTATION LINE (SVG overlay) ── */
+#annotations {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+}
+
+
+/* ── MOBILE ── */
+@media (max-width: 540px) {
+  .step:nth-child(even) { justify-content: flex-start; }
+  h1 { font-size: 2.2rem; }
+  #badge-units, #badge-eff { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div id="loader">
+  <div class="loader-tag">Loading model</div>
+  <div class="loader-bar"></div>
+</div>
+
+<!-- Progress -->
+<div id="bar"></div>
+
+<!-- 3D canvas -->
+<div id="canvas-wrap"></div>
+<div id="vignette"></div>
+
+<!-- UI chrome -->
+<div id="chapter"></div>
+<div id="counter">
+
+</div>
+
+
+
+<!-- ── SCROLL CONTENT ── -->
+<div id="scrolly">
+
+  <section id="intro">
+    <div class="tag">Rising Phoenix Retrofit Initiatives</div>
+    <h1>Living on the<br><em>Thermal Edge</em></h1>
+    <h2>How mobile homes survive in America's hottest city</h2> 
+    <!-- <div class="scroll-cue">Scroll to explore</div> -->
+  </section>
+
+  <div class="steps">
+
+    <!-- 01 -->
+    <div class="step" data-step="0">
+      <div class="panel">
+        <div class="step-num">01 · The Stock</div>
+        <h2>A Quarter-Million<br><em>Invisible</em> Homes</h2>
+        <p>The Phoenix holds over 87,000 manufactured housing units among the highest concentrations in the US. These homes house lower-income families, retirees, and recent migrants at the urban fringe, where heat is most extreme and transit is absent.</p>
+        <hr class="divider">
+        <div class="data-grid">
+          <div class="data-item"><span class="data-val">87k</span><span class="data-label">Units in AZ</span></div>
+          <div class="data-item"><span class="data-val">6%</span><span class="data-label">of AZ housing stock</span></div>
+          <div class="data-item"><span class="data-val">$850</span><span class="data-label">Median monthly cost</span></div>
+          <div class="data-item"><span class="data-val">1978</span><span class="data-label">Median build year</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 -->
+    <div class="step" data-step="1">
+      <div class="panel">
+        <div class="step-num">02 · The Envelope</div>
+        <h2>Walls That Let<br>Heat <em>Win</em></h2>
+        <p>Pre-HUD-Code mobile homes built before 1976 have R-7 wall insulation compared to R-21 in modern site-built homes. Thin aluminum siding conducts heat directly inward. On a 115°F Phoenix afternoon, interior walls reach 95°F before noon.</p>
+        <hr class="divider">
+        <div class="heat-bar-wrap">
+          <div class="heat-bar-label"><span>Insulation (R-value)</span><span>R-38 target</span></div>
+          <div class="heat-bar-track"><div class="heat-bar-fill" style="width:18%"></div></div>
+        </div>
+        <div class="heat-bar-wrap" style="margin-top:0.6rem">
+          <div class="heat-bar-label"><span>Mobile home (pre-1976)</span><span>R-7</span></div>
+          <div class="heat-bar-track"><div class="heat-bar-fill" style="width:18%"></div></div>
+        </div>
+        <div class="heat-bar-wrap" style="margin-top:0.6rem">
+          <div class="heat-bar-label"><span>Site-built (2024 code)</span><span>R-21</span></div>
+          <div class="heat-bar-track"><div class="heat-bar-fill" style="width:55%"></div></div>
+        </div>
+        <span class="pill">Retrofit target: R-21 minimum</span>
+      </div>
+    </div>
+
+    <!-- 03 -->
+    <div class="step" data-step="2">
+      <div class="panel">
+        <div class="step-num">03 · The Burden</div>
+        <h2>Cooling Bills<br>as <em>Debt Traps</em></h2>
+        <p>A typical mobile home in Phoenix runs 20–30% higher energy use intensity (EUI) than a comparable site-built home. Residents earning below median income spend up to 42 cents of every dollar on summer electricity bills — a "heat tax" imposed by building quality, not choice.</p>
+        <hr class="divider">
+        <div class="data-grid">
+          <div class="data-item"><span class="data-val">186</span><span class="data-label">Avg EUI (kBtu/sf/yr)</span></div>
+          <div class="data-item"><span class="data-val">142</span><span class="data-label">Site-built EUI baseline</span></div>
+          <div class="data-item"><span class="data-val">$380</span><span class="data-label">Avg summer elec bill</span></div>
+          <div class="data-item"><span class="data-val">42%</span><span class="data-label">Income share on cooling</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 04 -->
+    <div class="step" data-step="3">
+      <div class="panel">
+        <div class="step-num">04 · The Opportunity</div>
+        <h2>Retrofits That<br><em>Pay Back</em></h2>
+        <p>A shallow retrofit package — additional shading, HVAC cooling system enhancement, and efficient LED lighting — costs $4,200–$6,800 per unit and reduces cooling load by 28–35%. Deep retrofits adding solar PV system and better roof insulationachieve 45% EUI reduction, with payback under 7 years.</p>
+        <hr class="divider">
+        <div class="data-grid">
+          <div class="data-item"><span class="data-val">35%</span><span class="data-label">Shallow retrofit savings</span></div>
+          <div class="data-item"><span class="data-val">45%</span><span class="data-label">Deep retrofit savings</span></div>
+          <div class="data-item"><span class="data-val">$5.5k</span><span class="data-label">Avg retrofit cost</span></div>
+          <div class="data-item"><span class="data-val">7yr</span><span class="data-label">Payback period</span></div>
+        </div>
+        <span class="pill">IRA §25C covers 30% of retrofit cost</span>
+      </div>
+    </div>
+
+    <!-- 05 -->
+    <div class="step" data-step="4">
+      <div class="panel">
+        <div class="step-num">05 · The Intervention</div>
+        <h2>Policy at<br><em>Parcel Scale</em></h2>
+        <p>Phoenix's 2050 General Plan identifies manufactured housing parks as "heat vulnerability zones" but lacks a dedicated retrofit program. A targeted block-grant model could treat 2,000 units per year at scale.</p>
+        <hr class="divider">
+        <div class="data-grid">
+          <div class="data-item"><span class="data-val">2,000</span><span class="data-label">Units/year target</span></div>
+          <div class="data-item"><span class="data-val">14yr</span><span class="data-label">Full park retrofit horizon</span></div>
+        </div>
+        <span class="pill">LIHEAP + APS rebate stacking model</span>
+      </div>
+    </div>
+
+  </div><!-- /steps -->
+
+  <section id="outro">
+    <h2>The hottest homes<br>belong to those with<br>the least power to cool them.</h2>
+    <p>Phoenix Metro · Manufactured Housing Analysis · 2025</p>
+    <div class="rule"></div>
+    <a href="dashboard.html" class="btn-dashboard">Launch to Dashboard</a>
+  </section>
+
+</div><!-- /scrolly -->
+
+<!-- THREE.JS + LOADERS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<script>
+'use strict';
+
+// ─── RENDERER ────────────────────────────────
+const canvas = document.createElement('canvas');
+document.getElementById('canvas-wrap').appendChild(canvas);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputEncoding = THREE.sRGBEncoding;
+
+// ─── SCENE ───────────────────────────────────
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a0a);
+scene.fog = new THREE.Fog(0x0a0808, 28, 80);
+
+const camera = new THREE.PerspectiveCamera(25, innerWidth / innerHeight, 0.06, 300);
+camera.position.set(8, 5, 18);
+
+// ─── LIGHTS ──────────────────────────────────
+scene.add(new THREE.AmbientLight(0x8C7060, 0.5));
+
+// Sun (late afternoon Phoenix angle)
+const sun = new THREE.DirectionalLight(0xFFCFA0, 2.4);
+sun.position.set(12, 20, 8);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.near = 0.5;
+sun.shadow.camera.far = 80;
+sun.shadow.camera.left = sun.shadow.camera.bottom = -15;
+sun.shadow.camera.right = sun.shadow.camera.top = 15;
+sun.shadow.bias = -0.001;
+scene.add(sun);
+
+// Sky fill
+const skyFill = new THREE.DirectionalLight(0x3A5F80, 0.6);
+skyFill.position.set(-8, 10, -6);
+scene.add(skyFill);
+
+// Warm ground bounce
+const groundFill = new THREE.HemisphereLight(0x804020, 0xC48040, 0.45);
+scene.add(groundFill);
+
+
+// ─── LOAD GLB MODEL ──────────────────────────
+let houseModel = null;
+let modelBox = new THREE.Box3();
+let modelCenter = new THREE.Vector3();
+let modelSize = new THREE.Vector3();
+
+const loader = new THREE.GLTFLoader();
+loader.load(
+  './Test_House.glb',
+  (gltf) => {
+    houseModel = gltf.scene;
+
+    // Auto-center + scale to ~4 units wide
+    modelBox.setFromObject(houseModel);
+    modelBox.getCenter(modelCenter);
+    modelBox.getSize(modelSize);
+
+    const maxDim = Math.max(modelSize.x, modelSize.y, modelSize.z);
+    const targetSize = 8.0;
+    const scaleFactor = targetSize / maxDim;
+    houseModel.scale.setScalar(scaleFactor);
+
+    // Re-center after scale
+    modelBox.setFromObject(houseModel);
+    modelBox.getCenter(modelCenter);
+    houseModel.position.sub(modelCenter);
+    // Sit on ground
+    modelBox.setFromObject(houseModel);
+    houseModel.position.y -= modelBox.min.y;
+
+    // Enable shadows on all meshes
+    houseModel.traverse(child => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        // Boost material quality
+        if (child.material) {
+          child.material.roughness = Math.max(child.material.roughness ?? 0.8, 0.35);
+          child.material.envMapIntensity = 0.4;
+        }
+      }
+    });
+
+    scene.add(houseModel);
+
+    // Dismiss loader
+    const loaderEl = document.getElementById('loader');
+    loaderEl.classList.add('fade');
+    setTimeout(() => loaderEl.remove(), 900);
+
+    // Kick off intro camera
+    setTimeout(() => goToStep(-1), 400);
+    setTimeout(() => {
+      document.getElementById('counter-val').textContent = '87,000+';
+    }, 1200);
+  },
+  (xhr) => { /* progress */ },
+  (err) => {
+    console.error('GLB load error', err);
+    document.getElementById('loader').innerHTML = '<div style="color:#E8963A;font-size:.65rem;letter-spacing:.2em">Model load failed — check GLB path</div>';
+  }
+);
+
+// ─── SKY GRADIENT (background mesh) ──────────
+// Simple gradient sky via a large dome
+const skyGeo = new THREE.SphereGeometry(80, 24, 8);
+const skyMat = new THREE.ShaderMaterial({
+  side: THREE.BackSide,
+  uniforms: {
+    uTop:    { value: new THREE.Color(0x050505) },
+    uHorizon:{ value: new THREE.Color(0x000000) },
+  },
+  vertexShader: `
+    varying vec3 vPos;
+    void main() {
+      vPos = position;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+    }
+  `,
+  fragmentShader: `
+    varying vec3 vPos;
+    uniform vec3 uTop, uHorizon;
+    void main() {
+      float t = clamp((vPos.y + 20.0) / 80.0, 0.0, 1.0);
+      gl_FragColor = vec4(mix(uHorizon, uTop, t), 1.0);
+    }
+  `
+});
+scene.add(new THREE.Mesh(skyGeo, skyMat));
+
+// ─── CAMERA STEPS ────────────────────────────
+// Each step: camera position, lookAt target, chapter label, badges
+const STEPS = [
+  { // intro — 3/4 view
+    pos:  { x: 6.5,  y: 5.0,  z: 10.0  },
+    look: { x: -0.9,    y: 0.8,  z: 0    },
+    label: '',
+    badges: [],
+  },
+  { // 0 — wide establish
+    pos:  { x: 8.0,  y: 3.5,  z: 10.0 },
+    look: { x: -0.9,    y: 1.0,  z: 0    },
+    //label: 'The Stock',
+    badges: ['badge-temp', 'badge-units'],
+  },
+  { // 1 — close on wall/envelope from left
+    pos:  { x: -4.5, y: 5.0,  z: 5.0  },
+    look: { x: -0.5, y: 1.5,  z: 0    },
+    label: ' ',
+    badges: [],
+  },
+  { // 2 — front face, low angle (feeling trapped)
+    pos:  { x: 1.5,  y: 5.2,  z: 6.5  },
+    look: { x: 0,    y: 1.5,  z: 0    },
+    // label: 'The Energy Burden',
+    badges: ['badge-cost'],
+  },
+  { // 3 — aerial 45° (retrofit possibilities)
+    pos:  { x: 5.0,  y: 7.5,  z: 8.0  },
+    look: { x: 0,    y: 1.2,  z: 0    },
+    // label: ' ',
+    badges: ['badge-eff'],
+  },
+  { // 4 — wide pullback (context in landscape)
+    pos:  { x: 14.0, y: 6.0,  z: 14.0 },
+    look: { x: 0,    y: 1.0,  z: 0    },
+    // label: ' ',
+    badges: [],
+  },
+];
+
+const lookTarget = new THREE.Vector3(0, 1.2, 0);
+let currentStep = -99;
+let rotationMode = false;
+let clock = 0;
+
+function goToStep(idx) {
+  if (idx === currentStep) return;
+  currentStep = idx;
+  const cfg = STEPS[Math.max(0, Math.min(idx + 1, STEPS.length - 1))];
+
+  rotationMode = idx === 4;
+
+  // Camera tween
+  gsap.to(camera.position, {
+    x: cfg.pos.x, y: cfg.pos.y, z: cfg.pos.z,
+    duration: 2.0, ease: 'power2.inOut'
+  });
+  gsap.to(lookTarget, {
+    x: cfg.look.x, y: cfg.look.y, z: cfg.look.z,
+    duration: 2.0, ease: 'power2.inOut'
+  });
+
+  // Chapter label
+  document.getElementById('chapter').textContent = cfg.label;
+
+  // Badges
+  document.querySelectorAll('.badge').forEach(b => b.classList.remove('on'));
+  cfg.badges.forEach(id => {
+    setTimeout(() => document.getElementById(id)?.classList.add('on'), 800);
+  });
+
+  // Sun intensity changes by step (retrofit = brighter, burden = harsher)
+  const sunIntensities = [2.4, 2.4, 3.2, 3.8, 2.0, 1.6];
+  gsap.to(sun, { intensity: sunIntensities[Math.max(0, idx + 1)] ?? 2.4, duration: 1.5 });
+
+  // Fog depth changes
+  const fogFars = [80, 80, 50, 40, 80, 100];
+  scene.fog.far = fogFars[Math.max(0, idx + 1)] ?? 80;
+}
+
+// ─── INTERSECTION OBSERVER ───────────────────
+const steps = document.querySelectorAll('.step');
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    const panel = e.target.querySelector('.panel');
+    if (e.isIntersecting) {
+      goToStep(parseInt(e.target.dataset.step));
+      panel?.classList.add('on');
+    } else {
+      panel?.classList.remove('on');
+    }
+  });
+}, { threshold: 0.45 });
+
+steps.forEach(s => io.observe(s));
+
+// Intro fires on load
+goToStep(-1);
+
+// ─── PROGRESS ────────────────────────────────
+const barEl = document.getElementById('bar');
+window.addEventListener('scroll', () => {
+  barEl.style.width = (scrollY / (document.body.scrollHeight - innerHeight) * 100).toFixed(1) + '%';
+}, { passive: true });
+
+// ─── ANIMATE ─────────────────────────────────
+let orbitAngle = Math.atan2(14, 14);
+
+(function animate() {
+  requestAnimationFrame(animate);
+  clock += 0.01;
+
+  // Gentle model sway
+  if (houseModel) {
+    houseModel.rotation.y = Math.sin(clock * 0.18) * 0.025;
+  }
+
+  // Rotation mode (final step)
+  if (rotationMode) {
+    orbitAngle += 0.004;
+    const r = 19;
+    camera.position.x += (Math.sin(orbitAngle) * r - camera.position.x) * 0.025;
+    camera.position.z += (Math.cos(orbitAngle) * r - camera.position.z) * 0.025;
+    camera.position.y += (6.0 - camera.position.y) * 0.015;
+  }
+
+  camera.lookAt(lookTarget);
+
+  // Sun drift (time-lapse effect)
+  sun.position.x = 12 + Math.sin(clock * 0.05) * 4;
+  sun.position.y = 20 - Math.sin(clock * 0.08) * 3;
+
+  renderer.render(scene, camera);
+})();
+
+// ─── RESIZE ──────────────────────────────────
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>
