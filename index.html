@@ -325,7 +325,7 @@ h1 em { font-style: italic; color: var(--clay); }
   margin-bottom: 1rem;
 }
 #outro p {
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--ash);
@@ -416,7 +416,7 @@ h1 em { font-style: italic; color: var(--clay); }
       <div class="panel">
         <div class="step-num">01 · The Stock</div>
         <h2>A Quarter-Million<br><em>Invisible</em> Homes</h2>
-        <p>The Phoenix holds over 87,000 manufactured housing units among the highest concentrations in the US. These homes house lower-income families, retirees, and recent migrants at the urban fringe, where heat is most extreme and transit is absent.</p>
+        <p>Phoenix contains more than 87,000 manufactured housing units housing nearly a quarter-million residents, many of whom live in low-income, heat-vulnerable communities at the urban fringe with limited infrastructure and little recognition in climate adaptation planning.</p>
         <hr class="divider">
         <div class="data-grid">
           <div class="data-item"><span class="data-val">87k</span><span class="data-label">Units in AZ</span></div>
@@ -432,7 +432,7 @@ h1 em { font-style: italic; color: var(--clay); }
       <div class="panel">
         <div class="step-num">02 · The Envelope</div>
         <h2>Walls That Let<br>Heat <em>Win</em></h2>
-        <p>Pre-HUD-Code mobile homes built before 1976 have R-7 wall insulation compared to R-21 in modern site-built homes. Thin aluminum siding conducts heat directly inward. On a 115°F Phoenix afternoon, interior walls reach 95°F before noon.</p>
+        <p>Many pre-1976 mobile homes in Phoenix have poorly insulated lightweight envelopes that rapidly absorb extreme desert heat, causing dangerous indoor overheating and heavy dependence on air conditioning for basic thermal survival. On a 115°F Phoenix afternoon, interior walls reach 95°F before noon.</p>
         <hr class="divider">
         <div class="heat-bar-wrap">
           <div class="heat-bar-label"><span>Insulation (R-value)</span><span>R-38 target</span></div>
@@ -455,7 +455,7 @@ h1 em { font-style: italic; color: var(--clay); }
       <div class="panel">
         <div class="step-num">03 · The Burden</div>
         <h2>Cooling Bills<br>as <em>Debt Traps</em></h2>
-        <p>A typical mobile home in Phoenix runs 20–30% higher energy use intensity (EUI) than a comparable site-built home. Residents earning below median income spend up to 42 cents of every dollar on summer electricity bills — a "heat tax" imposed by building quality, not choice.</p>
+        <p>Mobile homes in Phoenix consume 20–30% more energy than comparable site-built housing, forcing many low-income residents to spend a disproportionate share of their income on cooling costs as a structural “heat tax”. Residents earning below median income spend up to 42 cents of every dollar on summer electricity bills imposed by building quality, not choice.</p>
         <hr class="divider">
         <div class="data-grid">
           <div class="data-item"><span class="data-val">186</span><span class="data-label">Avg EUI (kBtu/sf/yr)</span></div>
@@ -471,7 +471,7 @@ h1 em { font-style: italic; color: var(--clay); }
       <div class="panel">
         <div class="step-num">04 · The Opportunity</div>
         <h2>Retrofits That<br><em>Pay Back</em></h2>
-        <p>A shallow retrofit package — additional shading, HVAC cooling system enhancement, and efficient LED lighting — costs $4,200–$6,800 per unit and reduces cooling load by 28–35%. Deep retrofits adding solar PV system and better roof insulationachieve 45% EUI reduction, with payback under 7 years.</p>
+        <p>Shallow retrofit strategies such as shading, HVAC upgrades, and LED lighting can reduce cooling demand by 28–35%, while deeper retrofits integrating roof insulation and solar PV systems may achieve up to 45% EUI reduction with long-term energy savings over time, with payback under 7 years.</p>
         <hr class="divider">
         <div class="data-grid">
           <div class="data-item"><span class="data-val">35%</span><span class="data-label">Shallow retrofit savings</span></div>
@@ -488,7 +488,7 @@ h1 em { font-style: italic; color: var(--clay); }
       <div class="panel">
         <div class="step-num">05 · The Intervention</div>
         <h2>Policy at<br><em>Parcel Scale</em></h2>
-        <p>Phoenix's 2050 General Plan identifies manufactured housing parks as "heat vulnerability zones" but lacks a dedicated retrofit program. A targeted block-grant model could treat 2,000 units per year at scale.</p>
+        <p>Phoenix’s 2050 General Plan identifies manufactured housing communities as major heat-vulnerability zones, yet dedicated retrofit programs remain limited despite the potential for parcel-scale interventions to upgrade thousands of units annually.</p>
         <hr class="divider">
         <div class="data-grid">
           <div class="data-item"><span class="data-val">2,000</span><span class="data-label">Units/year target</span></div>
@@ -539,10 +539,10 @@ const camera = new THREE.PerspectiveCamera(25, innerWidth / innerHeight, 0.06, 3
 camera.position.set(8, 5, 18);
 
 // ─── LIGHTS ──────────────────────────────────
-scene.add(new THREE.AmbientLight(0x8C7060, 0.5));
+scene.add(new THREE.AmbientLight(0xC8CED6, 0.45));
 
 // Sun (late afternoon Phoenix angle)
-const sun = new THREE.DirectionalLight(0xFFCFA0, 2.4);
+const sun = new THREE.DirectionalLight(0xFFFFFF, 2.2);
 sun.position.set(12, 20, 8);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
@@ -554,12 +554,12 @@ sun.shadow.bias = -0.001;
 scene.add(sun);
 
 // Sky fill
-const skyFill = new THREE.DirectionalLight(0x3A5F80, 0.6);
+const skyFill = new THREE.DirectionalLight(0xB8C6D6, 0.55);
 skyFill.position.set(-8, 10, -6);
 scene.add(skyFill);
 
 // Warm ground bounce
-const groundFill = new THREE.HemisphereLight(0x804020, 0xC48040, 0.45);
+const groundFill = new THREE.HemisphereLight(0xBFCADA, 0xAEB6C0, 0.3);
 scene.add(groundFill);
 
 
